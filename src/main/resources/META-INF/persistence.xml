@@ -4,38 +4,26 @@
              http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd"
              version="2.2">
 
-    <!-- Unite unique du projet, ouverte par com.example.App -->
-    <persistence-unit name="hibernate-inheritance" transaction-type="RESOURCE_LOCAL">
+    <!-- Unite de persistance du TP requetes avancees (JPQL, Criteria, pagination), ouverte par com.example.App -->
+    <persistence-unit name="SallePU" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
-        <!-- SINGLE_TABLE : tout dans la table Vehicule -->
-        <class>com.example.model.singletable.Vehicule</class>
-        <class>com.example.model.singletable.Voiture</class>
-        <class>com.example.model.singletable.Moto</class>
-        <class>com.example.model.singletable.Camion</class>
-
-        <!-- JOINED : table Employe + une table par sous-classe -->
-        <class>com.example.model.joined.Employe</class>
-        <class>com.example.model.joined.Developpeur</class>
-        <class>com.example.model.joined.Manager</class>
-        <class>com.example.model.joined.Stagiaire</class>
-
-        <!-- TABLE_PER_CLASS : une table par classe concrete, pas de table Produit -->
-        <class>com.example.model.tableperclass.Produit</class>
-        <class>com.example.model.tableperclass.Livre</class>
-        <class>com.example.model.tableperclass.Electronique</class>
-        <class>com.example.model.tableperclass.Vetement</class>
+        <!-- entites declarees explicitement : Salle et Reservation, plus Batiment et Equipement -->
+        <class>com.example.model.Salle</class>
+        <class>com.example.model.Reservation</class>
+        <class>com.example.model.Batiment</class>
+        <class>com.example.model.Equipement</class>
 
         <properties>
             <!-- base H2 en memoire, conservee tant que la JVM tourne -->
             <property name="javax.persistence.jdbc.driver" value="org.h2.Driver"/>
-            <property name="javax.persistence.jdbc.url" value="jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"/>
             <property name="javax.persistence.jdbc.user" value="sa"/>
             <property name="javax.persistence.jdbc.password" value=""/>
             <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
-            <!-- schema genere au demarrage puis supprime a la fermeture -->
-            <property name="hibernate.hbm2ddl.auto" value="create-drop"/>
-            <!-- affiche le SQL pour comparer les trois strategies -->
+            <!-- cree ou met a jour les tables selon les entites -->
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <!-- affiche le SQL genere par les requetes JPQL et Criteria -->
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
         </properties>

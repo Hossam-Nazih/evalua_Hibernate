@@ -4,26 +4,26 @@
              http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd"
              version="2.2">
 
-    <!-- Unite de persistance du TP requetes avancees (JPQL, Criteria, pagination), ouverte par com.example.App -->
-    <persistence-unit name="SallePU" transaction-type="RESOURCE_LOCAL">
+    <!-- unite JPA utilisee par GenericDAO et les services (meme base que hibernate.cfg.xml) -->
+    <persistence-unit name="defaultPU" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
-        <!-- entites declarees explicitement : Salle et Reservation, plus Batiment et Equipement -->
-        <class>com.example.model.Salle</class>
-        <class>com.example.model.Reservation</class>
-        <class>com.example.model.Batiment</class>
-        <class>com.example.model.Equipement</class>
+        <class>org.example.entities.Categorie</class>
+        <class>org.example.entities.Produit</class>
+        <class>org.example.entities.Commande</class>
+        <class>org.example.entities.CommandeProduit</class>
+        <class>org.example.entities.User</class>
+        <class>org.example.entities.Client</class>
+        <class>org.example.entities.Fournisseur</class>
 
         <properties>
-            <!-- base H2 en memoire, conservee tant que la JVM tourne -->
-            <property name="javax.persistence.jdbc.driver" value="org.h2.Driver"/>
-            <property name="javax.persistence.jdbc.url" value="jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"/>
-            <property name="javax.persistence.jdbc.user" value="sa"/>
-            <property name="javax.persistence.jdbc.password" value=""/>
-            <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
-            <!-- cree ou met a jour les tables selon les entites -->
+            <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
+            <property name="javax.persistence.jdbc.url"
+                      value="jdbc:mysql://localhost:3306/gestion_commerciale?createDatabaseIfNotExist=true&amp;useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC"/>
+            <property name="javax.persistence.jdbc.user" value="root"/>
+            <property name="javax.persistence.jdbc.password" value="password"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
             <property name="hibernate.hbm2ddl.auto" value="update"/>
-            <!-- affiche le SQL genere par les requetes JPQL et Criteria -->
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
         </properties>

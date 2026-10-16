@@ -6,29 +6,29 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 /**
- * Mise en forme des dates et des montants pour les affichages console.
+ * Presentation des dates et des montants dans les listings console.
  */
 public class Formats {
-    private static final DateTimeFormatter DATE_LONGUE = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.FRENCH);
-    private static final DateTimeFormatter DATE_COURTE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final DecimalFormat MONTANT = new DecimalFormat("0.##");
+    private static final DateTimeFormatter JOUR_MOIS_ANNEE = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.FRENCH);
+    private static final DateTimeFormatter JJ_MM_AAAA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DecimalFormat SANS_DECIMALES_INUTILES = new DecimalFormat("0.##");
 
     private Formats() {}
 
-    // 14 Janvier 2013 : le mois francais est mis avec une majuscule
+    // "14 janvier 2013" devient "14 Janvier 2013", comme sur le modele de l'enonce
     public static String dateLongue(LocalDate date) {
-        String texte = date.format(DATE_LONGUE);
-        int espace = texte.indexOf(' ');
-        return texte.substring(0, espace + 1) + Character.toUpperCase(texte.charAt(espace + 1)) + texte.substring(espace + 2);
+        String texte = date.format(JOUR_MOIS_ANNEE);
+        int debutMois = texte.indexOf(' ') + 1;
+        return texte.substring(0, debutMois) + Character.toUpperCase(texte.charAt(debutMois)) + texte.substring(debutMois + 1);
     }
 
-    // 10/02/2013 ; une date absente s'affiche par un tiret
+    // 10/02/2013 ; "-" quand la date n'est pas encore connue
     public static String dateCourte(LocalDate date) {
-        return date == null ? "-" : date.format(DATE_COURTE);
+        return date == null ? "-" : date.format(JJ_MM_AAAA);
     }
 
-    // 1500 DH, 999.5 DH
+    // 1200.0 -> "1200 DH"
     public static String prix(double montant) {
-        return MONTANT.format(montant).replace(',', '.') + " DH";
+        return SANS_DECIMALES_INUTILES.format(montant).replace(',', '.') + " DH";
     }
 }

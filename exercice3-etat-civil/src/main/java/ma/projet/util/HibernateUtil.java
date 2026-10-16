@@ -1,8 +1,10 @@
 package ma.projet.util;
 
+import ma.projet.beans.Enfant;
 import ma.projet.beans.Femme;
 import ma.projet.beans.Homme;
 import ma.projet.beans.Mariage;
+import ma.projet.beans.Province;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
@@ -11,27 +13,28 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
- * Construit une seule SessionFactory pour toute l'application,
- * a partir de application.properties et des classes entites declarees ici.
- * Avec hbm2ddl.auto=update, les tables homme, femme et mariage sont generees au premier demarrage.
+ * Fabrique de sessions Hibernate, creee au chargement de la classe et partagee par tous les services.
+ * Avec hbm2ddl.auto=update, les tables province, homme, femme, mariage et enfant sont generees au demarrage.
  */
 public class HibernateUtil {
-    private static final SessionFactory sessionFactory = construire();
+    private static final SessionFactory sessionFactory = initialiser();
 
     private HibernateUtil() {}
 
-    private static SessionFactory construire() {
-        try (InputStream fichier = HibernateUtil.class.getClassLoader().getResourceAsStream("application.properties")) {
-            if (fichier == null) {
-                throw new IllegalStateException("application.properties introuvable dans le classpath");
+    private static SessionFactory initialiser() {
+        try (InputStream flux = HibernateUtil.class.getClassLoader().getResourceAsStream("application.properties")) {
+            if (flux == null) {
+                throw new IllegalStateException("Fichier application.properties absent du classpath");
             }
-            Properties proprietes = new Properties();
-            proprietes.load(fichier);
+            Properties parametres = new Properties();
+            parametres.load(flux);
             return new Configuration()
-                    .addProperties(proprietes)
+                    .addProperties(parametres)
+                    .addAnnotatedClass(Province.class)
                     .addAnnotatedClass(Homme.class)
                     .addAnnotatedClass(Femme.class)
                     .addAnnotatedClass(Mariage.class)
+                    .addAnnotatedClass(Enfant.class)
                     .buildSessionFactory();
         } catch (IOException e) {
             throw new ExceptionInInitializerError(e);
@@ -42,6 +45,7 @@ public class HibernateUtil {
         return sessionFactory;
     }
 
+    // ferme le pool de connexions ; a appeler en fin de programme
     public static void shutdown() {
         sessionFactory.close();
     }

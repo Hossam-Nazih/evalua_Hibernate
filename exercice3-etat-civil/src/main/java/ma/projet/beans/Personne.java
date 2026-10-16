@@ -4,8 +4,9 @@ import javax.persistence.*;
 import java.time.LocalDate;
 
 /**
- * Champs communs aux hommes et aux femmes.
- * @MappedSuperclass : pas de table personne, les colonnes sont recopiees dans homme et dans femme.
+ * Identite civile commune a Homme et Femme.
+ * @MappedSuperclass n'a pas de table : ses colonnes sont dupliquees dans les tables homme et femme,
+ * chacune avec sa propre sequence d'identifiants.
  */
 @MappedSuperclass
 public abstract class Personne {
@@ -13,46 +14,55 @@ public abstract class Personne {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(nullable = false, length = 50)
-    private String nom;
+    @Column(name = "nom_famille", nullable = false, length = 50)
+    private String nomFamille;
 
-    @Column(nullable = false, length = 50)
-    private String prenom;
+    @Column(name = "prenom_usuel", nullable = false, length = 50)
+    private String prenomUsuel;
 
-    @Column(length = 20)
-    private String telephone;
+    @Column(name = "numero_telephone", length = 20)
+    private String numeroTelephone;
 
-    @Column(length = 150)
-    private String adresse;
+    @Column(name = "adresse_domicile", length = 150)
+    private String adresseDomicile;
 
-    @Column(name = "date_naissance")
-    private LocalDate dateNaissance;
+    @Column(name = "date_de_naissance")
+    private LocalDate dateDeNaissance;
+
+    // nouveau lien : province de residence (facultative)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "province_id")
+    private Province province;
 
     protected Personne() {}
 
-    protected Personne(String nom, String prenom, String telephone, String adresse, LocalDate dateNaissance) {
-        this.nom = nom;
-        this.prenom = prenom;
-        this.telephone = telephone;
-        this.adresse = adresse;
-        this.dateNaissance = dateNaissance;
+    protected Personne(String nomFamille, String prenomUsuel, String numeroTelephone, String adresseDomicile,
+                       LocalDate dateDeNaissance, Province province) {
+        this.nomFamille = nomFamille;
+        this.prenomUsuel = prenomUsuel;
+        this.numeroTelephone = numeroTelephone;
+        this.adresseDomicile = adresseDomicile;
+        this.dateDeNaissance = dateDeNaissance;
+        this.province = province;
     }
 
     public int getId() { return id; }
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
-    public String getPrenom() { return prenom; }
-    public void setPrenom(String prenom) { this.prenom = prenom; }
-    public String getTelephone() { return telephone; }
-    public void setTelephone(String telephone) { this.telephone = telephone; }
-    public String getAdresse() { return adresse; }
-    public void setAdresse(String adresse) { this.adresse = adresse; }
-    public LocalDate getDateNaissance() { return dateNaissance; }
-    public void setDateNaissance(LocalDate dateNaissance) { this.dateNaissance = dateNaissance; }
+    public String getNomFamille() { return nomFamille; }
+    public void setNomFamille(String nomFamille) { this.nomFamille = nomFamille; }
+    public String getPrenomUsuel() { return prenomUsuel; }
+    public void setPrenomUsuel(String prenomUsuel) { this.prenomUsuel = prenomUsuel; }
+    public String getNumeroTelephone() { return numeroTelephone; }
+    public void setNumeroTelephone(String numeroTelephone) { this.numeroTelephone = numeroTelephone; }
+    public String getAdresseDomicile() { return adresseDomicile; }
+    public void setAdresseDomicile(String adresseDomicile) { this.adresseDomicile = adresseDomicile; }
+    public LocalDate getDateDeNaissance() { return dateDeNaissance; }
+    public void setDateDeNaissance(LocalDate dateDeNaissance) { this.dateDeNaissance = dateDeNaissance; }
+    public Province getProvince() { return province; }
+    public void setProvince(Province province) { this.province = province; }
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{id=" + id + ", nom='" + nom + "', prenom='" + prenom
-                + "', dateNaissance=" + dateNaissance + "}";
+        return getClass().getSimpleName() + "{id=" + id + ", nomFamille='" + nomFamille + "', prenomUsuel='" + prenomUsuel
+                + "', dateDeNaissance=" + dateDeNaissance + "}";
     }
 }

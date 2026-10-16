@@ -10,13 +10,13 @@ public class EmployeTacheService extends AbstractDao<EmployeTache> {
         super(EmployeTache.class);
     }
 
-    // une affectation se retrouve par le couple (employe, tache), pas par un entier
+    // cle composee : la recherche par un seul entier n'a pas de sens ici
     @Override
     public EmployeTache findById(int id) {
-        throw new UnsupportedOperationException("Utiliser findById(employeId, tacheId)");
+        throw new UnsupportedOperationException("Appeler findById(idEmploye, idTache)");
     }
 
-    public EmployeTache findById(int employeId, int tacheId) {
-        return lire(session -> session.get(EmployeTache.class, new EmployeTachePK(employeId, tacheId)));
+    public EmployeTache findById(int idEmploye, int idTache) {
+        return consulter(session -> session.get(EmployeTache.class, new EmployeTachePK(idEmploye, idTache)));
     }
 }

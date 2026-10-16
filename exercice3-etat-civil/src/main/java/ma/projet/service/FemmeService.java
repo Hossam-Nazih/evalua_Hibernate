@@ -12,25 +12,25 @@ public class FemmeService extends AbstractDao<Femme> {
         super(Femme.class);
     }
 
-    // date de naissance la plus ancienne ; null s'il n'y a aucune femme
+    // la plus agee = la date de naissance la plus ancienne ; null si la table est vide
     public Femme findPlusAgee() {
-        return lire(session -> session.createQuery("FROM Femme f ORDER BY f.dateNaissance", Femme.class)
+        return consulter(session -> session.createQuery("FROM Femme f ORDER BY f.dateDeNaissance", Femme.class)
                 .setMaxResults(1)
                 .uniqueResult());
     }
 
-    // requete native nommee : la somme SQL peut revenir en Long, BigInteger ou BigDecimal selon la base
-    public int nombreEnfantsEntre(Femme femme, LocalDate debut, LocalDate fin) {
-        Number total = lire(session -> (Number) session.getNamedNativeQuery("Femme.nombreEnfantsEntre")
-                .setParameter("femmeId", femme.getId())
-                .setParameter("debut", debut)
-                .setParameter("fin", fin)
+    // requete native nommee ; selon la base, SUM renvoie Long, BigInteger ou BigDecimal, d'ou le passage par Number
+    public int nombreEnfantsEntre(Femme femme, LocalDate du, LocalDate au) {
+        Number total = consulter(session -> (Number) session.getNamedNativeQuery("Femme.enfantsEntreDeuxDates")
+                .setParameter("idFemme", femme.getId())
+                .setParameter("du", du)
+                .setParameter("au", au)
                 .uniqueResult());
         return total == null ? 0 : total.intValue();
     }
 
     // requete JPQL nommee
     public List<Femme> findMarieesAuMoinsDeuxFois() {
-        return lire(session -> session.createNamedQuery("Femme.marieesAuMoinsDeuxFois", Femme.class).list());
+        return consulter(session -> session.createNamedQuery("Femme.marieesDeuxFoisOuPlus", Femme.class).list());
     }
 }

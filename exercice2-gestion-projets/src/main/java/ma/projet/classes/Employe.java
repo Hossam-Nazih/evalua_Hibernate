@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Employe du bureau d'etudes : il peut diriger des projets (chef) et realiser des taches.
+ * Ingenieur ou technicien du bureau. Il peut piloter des projets et se voir affecter des taches.
  */
 @Entity
 @Table(name = "employe")
@@ -14,43 +14,55 @@ public class Employe {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(nullable = false, length = 50)
-    private String nom;
+    @Column(name = "nom_employe", nullable = false, length = 50)
+    private String nomEmploye;
 
-    @Column(nullable = false, length = 50)
-    private String prenom;
+    @Column(name = "prenom_employe", nullable = false, length = 50)
+    private String prenomEmploye;
 
-    @Column(length = 20)
-    private String telephone;
+    @Column(name = "numero_telephone", length = 20)
+    private String numeroTelephone;
 
-    // projets dont il est le chef (cle etrangere chef_id dans la table projet)
-    @OneToMany(mappedBy = "chef")
-    private List<Projet> projetsGeres = new ArrayList<>();
+    // nouveau lien : departement de rattachement (facultatif)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "departement_id")
+    private Departement departement;
 
-    // ses affectations aux taches, avec les dates reelles
+    // projets pour lesquels il est chef (cote proprietaire : Projet.chefProjet)
+    @OneToMany(mappedBy = "chefProjet")
+    private List<Projet> projetsDiriges = new ArrayList<>();
+
+    // taches sur lesquelles il a travaille, avec les dates effectives
     @OneToMany(mappedBy = "employe")
-    private List<EmployeTache> employeTaches = new ArrayList<>();
+    private List<EmployeTache> affectations = new ArrayList<>();
 
     public Employe() {}
 
-    public Employe(String nom, String prenom, String telephone) {
-        this.nom = nom;
-        this.prenom = prenom;
-        this.telephone = telephone;
+    public Employe(String nomEmploye, String prenomEmploye, String numeroTelephone) {
+        this.nomEmploye = nomEmploye;
+        this.prenomEmploye = prenomEmploye;
+        this.numeroTelephone = numeroTelephone;
+    }
+
+    public Employe(String nomEmploye, String prenomEmploye, String numeroTelephone, Departement departement) {
+        this(nomEmploye, prenomEmploye, numeroTelephone);
+        this.departement = departement;
     }
 
     public int getId() { return id; }
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
-    public String getPrenom() { return prenom; }
-    public void setPrenom(String prenom) { this.prenom = prenom; }
-    public String getTelephone() { return telephone; }
-    public void setTelephone(String telephone) { this.telephone = telephone; }
-    public List<Projet> getProjetsGeres() { return projetsGeres; }
-    public List<EmployeTache> getEmployeTaches() { return employeTaches; }
+    public String getNomEmploye() { return nomEmploye; }
+    public void setNomEmploye(String nomEmploye) { this.nomEmploye = nomEmploye; }
+    public String getPrenomEmploye() { return prenomEmploye; }
+    public void setPrenomEmploye(String prenomEmploye) { this.prenomEmploye = prenomEmploye; }
+    public String getNumeroTelephone() { return numeroTelephone; }
+    public void setNumeroTelephone(String numeroTelephone) { this.numeroTelephone = numeroTelephone; }
+    public Departement getDepartement() { return departement; }
+    public void setDepartement(Departement departement) { this.departement = departement; }
+    public List<Projet> getProjetsDiriges() { return projetsDiriges; }
+    public List<EmployeTache> getAffectations() { return affectations; }
 
     @Override
     public String toString() {
-        return "Employe{id=" + id + ", nom='" + nom + "', prenom='" + prenom + "'}";
+        return "Employe{id=" + id + ", nomEmploye='" + nomEmploye + "', prenomEmploye='" + prenomEmploye + "'}";
     }
 }

@@ -1,13 +1,12 @@
 package ma.projet;
 
-import ma.projet.classes.Categorie;
-import ma.projet.classes.Commande;
 import ma.projet.classes.LigneCommandeProduit;
 import ma.projet.classes.Produit;
-import ma.projet.service.CategorieService;
-import ma.projet.service.CommandeService;
+import ma.projet.service.ClientService;
+import ma.projet.service.FournisseurService;
 import ma.projet.service.LigneCommandeService;
 import ma.projet.service.ProduitService;
+import ma.projet.test.TestGestionStock.JeuDeDonnees;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -19,79 +18,65 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.*;
 
 /**
- * Verifie les fonctionnalites de l'exercice 1 sur la base H2 en memoire.
+ * Controle automatique de l'exercice 1, sur les memes donnees que le programme de test.
  */
 public class GestionStockTest {
     private static final ProduitService produitService = new ProduitService();
-    private static Categorie stockage;
-    private static Commande commandeMars;
-    private static Commande commandeMai;
+    private static JeuDeDonnees donnees;
 
     @BeforeClass
-    public static void remplir() {
-        CategorieService categorieService = new CategorieService();
-        CommandeService commandeService = new CommandeService();
-        LigneCommandeService ligneService = new LigneCommandeService();
-
-        stockage = new Categorie("STO", "Stockage");
-        Categorie peripheriques = new Categorie("PER", "Périphériques");
-        assertTrue(categorieService.create(stockage));
-        assertTrue(categorieService.create(peripheriques));
-
-        Produit es12 = new Produit("ES12", 120, stockage);
-        Produit zr85 = new Produit("ZR85", 100, peripheriques);
-        Produit ee85 = new Produit("EE85", 200, stockage);
-        Produit ab10 = new Produit("AB10", 80, peripheriques);
-        for (Produit p : new Produit[]{es12, zr85, ee85, ab10}) {
-            assertTrue(produitService.create(p));
-        }
-
-        commandeMars = new Commande(LocalDate.of(2013, 3, 14));
-        commandeMai = new Commande(LocalDate.of(2013, 5, 2));
-        commandeService.create(commandeMars);
-        commandeService.create(commandeMai);
-        ligneService.create(new LigneCommandeProduit(es12, commandeMars, 7));
-        ligneService.create(new LigneCommandeProduit(zr85, commandeMars, 14));
-        ligneService.create(new LigneCommandeProduit(ee85, commandeMars, 5));
-        ligneService.create(new LigneCommandeProduit(ab10, commandeMai, 3));
+    public static void alimenterBase() {
+        donnees = JeuDeDonnees.charger();
     }
 
     @Test
-    public void produitsParCategorie() {
-        assertEquals(Arrays.asList("EE85", "ES12"), references(produitService.findByCategorie(stockage)));
+    public void listeParCategorie() {
+        assertEquals(Arrays.asList("EE85", "ES12"), codes(produitService.findByCategorie(donnees.stockage)));
     }
 
     @Test
-    public void produitsCommandesEntreDeuxDates() {
+    public void commandesDeMars2013() {
         List<Produit> mars = produitService.findProduitsCommandesEntre(LocalDate.of(2013, 3, 1), LocalDate.of(2013, 3, 31));
-        assertEquals(Arrays.asList("EE85", "ES12", "ZR85"), references(mars));
+        assertEquals(Arrays.asList("EE85", "ES12", "ZR85"), codes(mars));
     }
 
     @Test
-    public void detailDUneCommande() {
-        String detail = produitService.detailCommande(commandeMars);
-        assertTrue(detail.startsWith("Commande : " + commandeMars.getId()));
-        assertTrue(detail.contains("Date : 14 Mars 2013"));
-        assertTrue(detail.contains("ES12        120 DH  7"));
-        assertTrue(detail.contains("ZR85        100 DH  14"));
-        assertTrue(detail.contains("EE85        200 DH  5"));
+    public void blocDetailCommande() {
+        String bloc = produitService.detailCommande(donnees.commandeMars);
+        assertTrue(bloc.startsWith("Commande : " + donnees.commandeMars.getId()));
+        assertTrue(bloc.contains("Date : 14 Mars 2013"));
+        assertTrue(bloc.contains("ES12        120 DH  7"));
+        assertTrue(bloc.contains("ZR85        100 DH  14"));
+        assertTrue(bloc.contains("EE85        200 DH  5"));
     }
 
     @Test
-    public void requeteNommeePrixSuperieurA100() {
-        // ZR85 coute exactement 100 DH : il n'est pas "superieur"
-        assertEquals(Arrays.asList("ES12", "EE85"), references(produitService.findPrixSuperieur(100)));
+    public void requeteNommeeAuDessusDe100() {
+        // 100 DH pile n'est pas "superieur a 100"
+        assertEquals(Arrays.asList("ES12", "EE85"), codes(produitService.findPrixSuperieur(100)));
     }
 
     @Test
-    public void ligneRetrouveeParSaCleComposee() {
-        LigneCommandeProduit ligne = new LigneCommandeService().findById(
-                produitService.findPrixSuperieur(150).get(0).getId(), commandeMars.getId());
+    public void ligneParCleComposee() {
+        LigneCommandeProduit ligne = new LigneCommandeService().findById(donnees.ee85.getId(), donnees.commandeMars.getId());
         assertNotNull(ligne);
-        assertEquals(5, ligne.getQuantite());
+        assertEquals(5, ligne.getQuantiteCommandee());
     }
 
-    private static List<String> references(List<Produit> produits) {
-        return produits.stream().map(Produit::getReference).collect(Collectors.toList());
+    @Test
+    public void produitsDUnFournisseur() {
+        assertEquals(Arrays.asList("EE85", "ES12"), codes(new FournisseurService().findProduitsFournis(donnees.techno)));
+    }
+
+    @Test
+    public void historiqueEtTotalDUnClient() {
+        ClientService clientService = new ClientService();
+        assertEquals(1, clientService.findCommandesDuClient(donnees.yassine).size());
+        // 7 x 120 + 14 x 100 + 5 x 200
+        assertEquals(3240.0, clientService.totalAchats(donnees.yassine), 0.001);
+    }
+
+    private static List<String> codes(List<Produit> produits) {
+        return produits.stream().map(Produit::getCodeArticle).collect(Collectors.toList());
     }
 }

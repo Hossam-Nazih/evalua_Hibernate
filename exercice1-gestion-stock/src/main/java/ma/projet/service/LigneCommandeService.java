@@ -10,13 +10,13 @@ public class LigneCommandeService extends AbstractDao<LigneCommandeProduit> {
         super(LigneCommandeProduit.class);
     }
 
-    // une ligne n'a pas d'identifiant entier : elle se retrouve par le couple (produit, commande)
+    // la cle d'une ligne est composee : un seul entier ne suffit pas a la retrouver
     @Override
     public LigneCommandeProduit findById(int id) {
-        throw new UnsupportedOperationException("Utiliser findById(produitId, commandeId)");
+        throw new UnsupportedOperationException("Appeler findById(idProduit, idCommande)");
     }
 
-    public LigneCommandeProduit findById(int produitId, int commandeId) {
-        return lire(session -> session.get(LigneCommandeProduit.class, new LigneCommandePK(produitId, commandeId)));
+    public LigneCommandeProduit findById(int idProduit, int idCommande) {
+        return consulter(session -> session.get(LigneCommandeProduit.class, new LigneCommandePK(idProduit, idCommande)));
     }
 }

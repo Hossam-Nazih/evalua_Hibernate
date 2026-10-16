@@ -11,98 +11,99 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * CRUD des produits et requetes de consultation du stock.
- * Les methodes findXxx renvoient les donnees, les methodes afficherXxx les ecrivent dans la console.
+ * Consultations du stock demandees par l'enonce.
+ * Convention : findXxx renvoie les objets, afficherXxx imprime le resultat dans la console.
  */
 public class ProduitService extends AbstractDao<Produit> {
+    private static final String COLONNES = "%-12s%s";
 
     public ProduitService() {
         super(Produit.class);
     }
 
-    // ---------- produits d'une categorie ----------
+    // ===== 1. Produits d'une categorie =====
 
     public List<Produit> findByCategorie(Categorie categorie) {
-        return lire(session -> session.createQuery(
-                        "SELECT p FROM Produit p WHERE p.categorie.id = :id ORDER BY p.reference", Produit.class)
-                .setParameter("id", categorie.getId())
+        return consulter(session -> session.createQuery(
+                        "SELECT p FROM Produit p WHERE p.categorie.id = :idCategorie ORDER BY p.codeArticle", Produit.class)
+                .setParameter("idCategorie", categorie.getId())
                 .list());
     }
 
     public void afficherProduitsParCategorie(Categorie categorie) {
-        System.out.println("Catégorie : " + categorie.getLibelle());
-        System.out.println(String.format("%-12s%s", "Référence", "Prix"));
+        System.out.println("Catégorie : " + categorie.getDesignation());
+        System.out.println(String.format(COLONNES, "Référence", "Prix"));
         for (Produit p : findByCategorie(categorie)) {
-            System.out.println(String.format("%-12s%s", p.getReference(), Formats.prix(p.getPrix())));
+            System.out.println(String.format(COLONNES, p.getCodeArticle(), Formats.prix(p.getPrixUnitaire())));
         }
     }
 
-    // ---------- produits commandes entre deux dates ----------
+    // ===== 2. Produits commandes sur une periode =====
 
-    // DISTINCT : un produit present dans plusieurs commandes de la periode n'est liste qu'une fois
-    public List<Produit> findProduitsCommandesEntre(LocalDate debut, LocalDate fin) {
-        return lire(session -> session.createQuery(
+    // un article commande plusieurs fois dans la periode ne doit apparaitre qu'une fois : DISTINCT
+    public List<Produit> findProduitsCommandesEntre(LocalDate du, LocalDate au) {
+        return consulter(session -> session.createQuery(
                         "SELECT DISTINCT p FROM LigneCommandeProduit l JOIN l.produit p JOIN l.commande c "
-                                + "WHERE c.dateCommande BETWEEN :debut AND :fin ORDER BY p.reference", Produit.class)
-                .setParameter("debut", debut)
-                .setParameter("fin", fin)
+                                + "WHERE c.dateEmission BETWEEN :du AND :au ORDER BY p.codeArticle", Produit.class)
+                .setParameter("du", du)
+                .setParameter("au", au)
                 .list());
     }
 
-    public void afficherProduitsCommandesEntre(LocalDate debut, LocalDate fin) {
-        System.out.println("Produits commandés entre le " + Formats.dateLongue(debut) + " et le " + Formats.dateLongue(fin) + " :");
-        System.out.println(String.format("%-12s%s", "Référence", "Prix"));
-        for (Produit p : findProduitsCommandesEntre(debut, fin)) {
-            System.out.println(String.format("%-12s%s", p.getReference(), Formats.prix(p.getPrix())));
+    public void afficherProduitsCommandesEntre(LocalDate du, LocalDate au) {
+        System.out.println("Produits commandés du " + Formats.dateLongue(du) + " au " + Formats.dateLongue(au) + " :");
+        System.out.println(String.format(COLONNES, "Référence", "Prix"));
+        for (Produit p : findProduitsCommandesEntre(du, au)) {
+            System.out.println(String.format(COLONNES, p.getCodeArticle(), Formats.prix(p.getPrixUnitaire())));
         }
     }
 
-    // ---------- produits d'une commande ----------
+    // ===== 3. Contenu d'une commande =====
 
-    // JOIN FETCH : la reference et le prix du produit sont lisibles apres fermeture de la session
+    // JOIN FETCH ramene le produit avec la ligne : on peut lire son code apres la fermeture de la session
     public List<LigneCommandeProduit> findLignesCommande(Commande commande) {
-        return lire(session -> session.createQuery(
+        return consulter(session -> session.createQuery(
                         "SELECT l FROM LigneCommandeProduit l JOIN FETCH l.produit p "
-                                + "WHERE l.commande.id = :id ORDER BY p.reference", LigneCommandeProduit.class)
-                .setParameter("id", commande.getId())
+                                + "WHERE l.commande.id = :idCommande ORDER BY p.codeArticle", LigneCommandeProduit.class)
+                .setParameter("idCommande", commande.getId())
                 .list());
     }
 
     /**
-     * Texte au format demande :
+     * Construit le bloc de texte attendu :
      * Commande : 4     Date : 14 Mars 2013
      * Liste des produits :
      * Référence   Prix    Quantité
      * ES12        120 DH  7
      */
     public String detailCommande(Commande commande) {
-        StringBuilder texte = new StringBuilder();
-        texte.append(String.format("Commande : %-6dDate : %s%n", commande.getId(), Formats.dateLongue(commande.getDateCommande())));
-        texte.append(String.format("Liste des produits :%n"));
-        texte.append(String.format("%-12s%-8s%s%n", "Référence", "Prix", "Quantité"));
+        StringBuilder bloc = new StringBuilder();
+        bloc.append(String.format("Commande : %-6dDate : %s%n", commande.getId(), Formats.dateLongue(commande.getDateEmission())));
+        bloc.append(String.format("Liste des produits :%n"));
+        bloc.append(String.format("%-12s%-8s%s%n", "Référence", "Prix", "Quantité"));
         for (LigneCommandeProduit ligne : findLignesCommande(commande)) {
-            texte.append(String.format("%-12s%-8s%d%n",
-                    ligne.getProduit().getReference(), Formats.prix(ligne.getProduit().getPrix()), ligne.getQuantite()));
+            Produit p = ligne.getProduit();
+            bloc.append(String.format("%-12s%-8s%d%n", p.getCodeArticle(), Formats.prix(p.getPrixUnitaire()), ligne.getQuantiteCommandee()));
         }
-        return texte.toString();
+        return bloc.toString();
     }
 
     public void afficherProduitsCommande(Commande commande) {
         System.out.print(detailCommande(commande));
     }
 
-    // ---------- requete nommee ----------
+    // ===== 4. Requete nommee Produit.plusCherQue =====
 
-    public List<Produit> findPrixSuperieur(double prix) {
-        return lire(session -> session.createNamedQuery("Produit.prixSuperieur", Produit.class)
-                .setParameter("prix", prix)
+    public List<Produit> findPrixSuperieur(double seuil) {
+        return consulter(session -> session.createNamedQuery("Produit.plusCherQue", Produit.class)
+                .setParameter("seuil", seuil)
                 .list());
     }
 
-    public void afficherProduitsPrixSuperieur(double prix) {
-        System.out.println("Produits dont le prix dépasse " + Formats.prix(prix) + " :");
-        for (Produit p : findPrixSuperieur(prix)) {
-            System.out.println(String.format("%-12s%s", p.getReference(), Formats.prix(p.getPrix())));
+    public void afficherProduitsPrixSuperieur(double seuil) {
+        System.out.println("Produits à plus de " + Formats.prix(seuil) + " :");
+        for (Produit p : findPrixSuperieur(seuil)) {
+            System.out.println(String.format(COLONNES, p.getCodeArticle(), Formats.prix(p.getPrixUnitaire())));
         }
     }
 }

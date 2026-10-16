@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.time.LocalDate;
 
 /**
- * Realisation d'une tache par un employe, avec les dates reellement constatees.
+ * Affectation d'un employe a une tache, avec les dates auxquelles le travail a vraiment eu lieu.
  */
 @Entity
 @Table(name = "employe_tache")
@@ -12,7 +12,7 @@ public class EmployeTache {
     @EmbeddedId
     private EmployeTachePK id;
 
-    // colonnes deja renseignees par la cle composee : associations en lecture seule
+    // les deux colonnes de jointure appartiennent a la cle : pas d'ecriture par ces associations
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employe_id", insertable = false, updatable = false)
     private Employe employe;
@@ -21,28 +21,28 @@ public class EmployeTache {
     @JoinColumn(name = "tache_id", insertable = false, updatable = false)
     private Tache tache;
 
-    @Column(name = "date_debut_reelle")
-    private LocalDate dateDebutReelle;
+    @Column(name = "debut_effectif")
+    private LocalDate debutEffectif;
 
-    @Column(name = "date_fin_reelle")
-    private LocalDate dateFinReelle;
+    @Column(name = "fin_effective")
+    private LocalDate finEffective;
 
     public EmployeTache() {}
 
-    // l'employe et la tache doivent deja etre enregistres
-    public EmployeTache(Employe employe, Tache tache, LocalDate dateDebutReelle, LocalDate dateFinReelle) {
+    // employe et tache deja persistes : leurs identifiants forment la cle
+    public EmployeTache(Employe employe, Tache tache, LocalDate debutEffectif, LocalDate finEffective) {
         this.id = new EmployeTachePK(employe.getId(), tache.getId());
         this.employe = employe;
         this.tache = tache;
-        this.dateDebutReelle = dateDebutReelle;
-        this.dateFinReelle = dateFinReelle;
+        this.debutEffectif = debutEffectif;
+        this.finEffective = finEffective;
     }
 
     public EmployeTachePK getId() { return id; }
     public Employe getEmploye() { return employe; }
     public Tache getTache() { return tache; }
-    public LocalDate getDateDebutReelle() { return dateDebutReelle; }
-    public void setDateDebutReelle(LocalDate dateDebutReelle) { this.dateDebutReelle = dateDebutReelle; }
-    public LocalDate getDateFinReelle() { return dateFinReelle; }
-    public void setDateFinReelle(LocalDate dateFinReelle) { this.dateFinReelle = dateFinReelle; }
+    public LocalDate getDebutEffectif() { return debutEffectif; }
+    public void setDebutEffectif(LocalDate debutEffectif) { this.debutEffectif = debutEffectif; }
+    public LocalDate getFinEffective() { return finEffective; }
+    public void setFinEffective(LocalDate finEffective) { this.finEffective = finEffective; }
 }

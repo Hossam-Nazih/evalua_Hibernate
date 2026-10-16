@@ -6,62 +6,63 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Tache d'un projet. dateDebut / dateFin sont les dates planifiees ;
- * les dates reelles sont saisies dans EmployeTache.
+ * Etape d'un projet. debutPrevu / finPrevue = planning ; les dates effectives sont dans EmployeTache.
  */
 @Entity
 @Table(name = "tache")
-// requete nommee demandee par l'enonce : taches dont le prix depasse un montant
-@NamedQuery(name = "Tache.prixSuperieur", query = "SELECT t FROM Tache t WHERE t.prix > :prix ORDER BY t.prix")
+// requete nommee de l'enonce : taches dont le cout depasse un montant, triees par cout
+@NamedQuery(name = "Tache.coutSuperieurA",
+        query = "SELECT t FROM Tache t WHERE t.cout > :montant ORDER BY t.cout")
 public class Tache {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(nullable = false, length = 100)
-    private String nom;
+    @Column(name = "libelle", nullable = false, length = 100)
+    private String libelle;
 
-    @Column(name = "date_debut")
-    private LocalDate dateDebut;
+    @Column(name = "debut_prevu")
+    private LocalDate debutPrevu;
 
-    @Column(name = "date_fin")
-    private LocalDate dateFin;
+    @Column(name = "fin_prevue")
+    private LocalDate finPrevue;
 
-    // cout de la tache en DH
-    private double prix;
+    // montant facture pour la tache, en dirhams
+    @Column(name = "cout")
+    private double cout;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "projet_id", nullable = false)
     private Projet projet;
 
     @OneToMany(mappedBy = "tache")
-    private List<EmployeTache> employeTaches = new ArrayList<>();
+    private List<EmployeTache> affectations = new ArrayList<>();
 
     public Tache() {}
 
-    public Tache(String nom, LocalDate dateDebut, LocalDate dateFin, double prix, Projet projet) {
-        this.nom = nom;
-        this.dateDebut = dateDebut;
-        this.dateFin = dateFin;
-        this.prix = prix;
+    public Tache(String libelle, LocalDate debutPrevu, LocalDate finPrevue, double cout, Projet projet) {
+        this.libelle = libelle;
+        this.debutPrevu = debutPrevu;
+        this.finPrevue = finPrevue;
+        this.cout = cout;
         this.projet = projet;
     }
 
     public int getId() { return id; }
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
-    public LocalDate getDateDebut() { return dateDebut; }
-    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
-    public LocalDate getDateFin() { return dateFin; }
-    public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
-    public double getPrix() { return prix; }
-    public void setPrix(double prix) { this.prix = prix; }
+    public String getLibelle() { return libelle; }
+    public void setLibelle(String libelle) { this.libelle = libelle; }
+    public LocalDate getDebutPrevu() { return debutPrevu; }
+    public void setDebutPrevu(LocalDate debutPrevu) { this.debutPrevu = debutPrevu; }
+    public LocalDate getFinPrevue() { return finPrevue; }
+    public void setFinPrevue(LocalDate finPrevue) { this.finPrevue = finPrevue; }
+    public double getCout() { return cout; }
+    public void setCout(double cout) { this.cout = cout; }
     public Projet getProjet() { return projet; }
     public void setProjet(Projet projet) { this.projet = projet; }
-    public List<EmployeTache> getEmployeTaches() { return employeTaches; }
+    public List<EmployeTache> getAffectations() { return affectations; }
 
     @Override
     public String toString() {
-        return "Tache{id=" + id + ", nom='" + nom + "', prix=" + prix + "}";
+        return "Tache{id=" + id + ", libelle='" + libelle + "', cout=" + cout + "}";
     }
 }

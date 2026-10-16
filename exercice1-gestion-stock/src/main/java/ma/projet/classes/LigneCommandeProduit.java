@@ -3,7 +3,7 @@ package ma.projet.classes;
 import javax.persistence.*;
 
 /**
- * Association entre Commande et Produit, avec la quantite commandee.
+ * Ligne d'un bon de commande : quel produit, dans quelle commande, en quelle quantite.
  */
 @Entity
 @Table(name = "ligne_commande_produit")
@@ -11,7 +11,8 @@ public class LigneCommandeProduit {
     @EmbeddedId
     private LigneCommandePK id;
 
-    // les colonnes de jointure sont deja ecrites par la cle composee : ces deux associations sont en lecture seule
+    // produit_id et commande_id sont ecrits via la cle composee ;
+    // ces associations servent seulement a naviguer (insertable/updatable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "produit_id", insertable = false, updatable = false)
     private Produit produit;
@@ -20,22 +21,22 @@ public class LigneCommandeProduit {
     @JoinColumn(name = "commande_id", insertable = false, updatable = false)
     private Commande commande;
 
-    @Column(nullable = false)
-    private int quantite;
+    @Column(name = "quantite_commandee", nullable = false)
+    private int quantiteCommandee;
 
     public LigneCommandeProduit() {}
 
-    // produit et commande doivent deja etre enregistres (leurs id servent a former la cle)
-    public LigneCommandeProduit(Produit produit, Commande commande, int quantite) {
+    // le produit et la commande doivent avoir ete enregistres avant : leurs id composent la cle
+    public LigneCommandeProduit(Produit produit, Commande commande, int quantiteCommandee) {
         this.id = new LigneCommandePK(produit.getId(), commande.getId());
         this.produit = produit;
         this.commande = commande;
-        this.quantite = quantite;
+        this.quantiteCommandee = quantiteCommandee;
     }
 
     public LigneCommandePK getId() { return id; }
     public Produit getProduit() { return produit; }
     public Commande getCommande() { return commande; }
-    public int getQuantite() { return quantite; }
-    public void setQuantite(int quantite) { this.quantite = quantite; }
+    public int getQuantiteCommandee() { return quantiteCommandee; }
+    public void setQuantiteCommandee(int quantiteCommandee) { this.quantiteCommandee = quantiteCommandee; }
 }

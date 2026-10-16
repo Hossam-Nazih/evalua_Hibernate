@@ -13,37 +13,37 @@ public class TacheService extends AbstractDao<Tache> {
         super(Tache.class);
     }
 
-    // ---------- requete nommee ----------
+    // ===== Requete nommee Tache.coutSuperieurA =====
 
-    public List<Tache> findPrixSuperieur(double prix) {
-        return lire(session -> session.createNamedQuery("Tache.prixSuperieur", Tache.class)
-                .setParameter("prix", prix)
+    public List<Tache> findPrixSuperieur(double montant) {
+        return consulter(session -> session.createNamedQuery("Tache.coutSuperieurA", Tache.class)
+                .setParameter("montant", montant)
                 .list());
     }
 
-    public void afficherTachesPrixSuperieur(double prix) {
-        System.out.println("Tâches dont le prix dépasse " + Formats.prix(prix) + " :");
-        for (Tache t : findPrixSuperieur(prix)) {
-            System.out.println(String.format("%-4d%-15s%s", t.getId(), t.getNom(), Formats.prix(t.getPrix())));
+    public void afficherTachesPrixSuperieur(double montant) {
+        System.out.println("Tâches coûtant plus de " + Formats.prix(montant) + " :");
+        for (Tache t : findPrixSuperieur(montant)) {
+            System.out.println(String.format("%-4d%-15s%s", t.getId(), t.getLibelle(), Formats.prix(t.getCout())));
         }
     }
 
-    // ---------- taches realisees entre deux dates ----------
+    // ===== Taches realisees sur une periode =====
 
-    // une tache est retenue si sa realisation a commence et s'est terminee dans la periode
-    public List<Tache> findRealiseesEntre(LocalDate debut, LocalDate fin) {
-        return lire(session -> session.createQuery(
-                        "SELECT DISTINCT t FROM EmployeTache et JOIN et.tache t "
-                                + "WHERE et.dateDebutReelle >= :debut AND et.dateFinReelle <= :fin ORDER BY t.id", Tache.class)
-                .setParameter("debut", debut)
-                .setParameter("fin", fin)
+    // retenue si le travail effectif a debute ET s'est acheve dans l'intervalle
+    public List<Tache> findRealiseesEntre(LocalDate du, LocalDate au) {
+        return consulter(session -> session.createQuery(
+                        "SELECT DISTINCT t FROM EmployeTache a JOIN a.tache t "
+                                + "WHERE a.debutEffectif >= :du AND a.finEffective <= :au ORDER BY t.id", Tache.class)
+                .setParameter("du", du)
+                .setParameter("au", au)
                 .list());
     }
 
-    public void afficherRealiseesEntre(LocalDate debut, LocalDate fin) {
-        System.out.println("Tâches réalisées entre le " + Formats.dateCourte(debut) + " et le " + Formats.dateCourte(fin) + " :");
-        for (Tache t : findRealiseesEntre(debut, fin)) {
-            System.out.println(String.format("%-4d%s", t.getId(), t.getNom()));
+    public void afficherRealiseesEntre(LocalDate du, LocalDate au) {
+        System.out.println("Tâches réalisées du " + Formats.dateCourte(du) + " au " + Formats.dateCourte(au) + " :");
+        for (Tache t : findRealiseesEntre(du, au)) {
+            System.out.println(String.format("%-4d%s", t.getId(), t.getLibelle()));
         }
     }
 }

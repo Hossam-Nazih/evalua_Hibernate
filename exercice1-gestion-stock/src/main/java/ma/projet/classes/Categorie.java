@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Famille de produits (ex. code CAT-PC, libelle "Ordinateurs portables").
+ * Rayon du magasin qui regroupe des produits de meme nature (stockage, peripheriques...).
  */
 @Entity
 @Table(name = "categorie")
@@ -14,32 +14,33 @@ public class Categorie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(nullable = false, unique = true, length = 20)
-    private String code;
+    // code court affiche sur les etiquettes, unique dans le magasin
+    @Column(name = "code_categorie", nullable = false, unique = true, length = 20)
+    private String codeCategorie;
 
-    @Column(nullable = false, length = 100)
-    private String libelle;
+    @Column(name = "designation", nullable = false, length = 100)
+    private String designation;
 
-    // cote inverse : la cle etrangere categorie_id est dans la table produit
+    // relation inverse : c'est Produit.categorie qui porte la colonne categorie_id
     @OneToMany(mappedBy = "categorie")
-    private List<Produit> produits = new ArrayList<>();
+    private List<Produit> listeProduits = new ArrayList<>();
 
     public Categorie() {}
 
-    public Categorie(String code, String libelle) {
-        this.code = code;
-        this.libelle = libelle;
+    public Categorie(String codeCategorie, String designation) {
+        this.codeCategorie = codeCategorie;
+        this.designation = designation;
     }
 
     public int getId() { return id; }
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
-    public String getLibelle() { return libelle; }
-    public void setLibelle(String libelle) { this.libelle = libelle; }
-    public List<Produit> getProduits() { return produits; }
+    public String getCodeCategorie() { return codeCategorie; }
+    public void setCodeCategorie(String codeCategorie) { this.codeCategorie = codeCategorie; }
+    public String getDesignation() { return designation; }
+    public void setDesignation(String designation) { this.designation = designation; }
+    public List<Produit> getListeProduits() { return listeProduits; }
 
     @Override
     public String toString() {
-        return "Categorie{id=" + id + ", code='" + code + "', libelle='" + libelle + "'}";
+        return "Categorie{id=" + id + ", codeCategorie='" + codeCategorie + "', designation='" + designation + "'}";
     }
 }

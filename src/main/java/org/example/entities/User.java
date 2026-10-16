@@ -3,8 +3,9 @@ package org.example.entities;
 import javax.persistence.*;
 
 /**
- * Racine de la hierarchie des utilisateurs. Strategie JOINED : colonnes communes dans users,
- * colonnes propres a chaque sous-classe dans clients et fournisseurs (jointure sur l'id).
+ * Classe mere abstraite des acteurs (clients et fournisseurs).
+ * Avec JOINED, la table users garde les champs communs et chaque sous-classe a sa propre table
+ * dont la cle primaire est aussi une cle etrangere vers users.
  */
 @Entity
 @Table(name = "users")
@@ -14,13 +15,21 @@ public abstract class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
-    private String nom;
+    @Column(name = "nom_complet", nullable = false, length = 100)
+    private String nomComplet;
+
+    @Column(name = "email", unique = true, length = 120)
+    private String email;
 
     protected User() {}
-    protected User(String nom) { this.nom = nom; }
+    protected User(String nomComplet, String email) {
+        this.nomComplet = nomComplet;
+        this.email = email;
+    }
 
     public Long getId() { return id; }
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
+    public String getNomComplet() { return nomComplet; }
+    public void setNomComplet(String nomComplet) { this.nomComplet = nomComplet; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 }

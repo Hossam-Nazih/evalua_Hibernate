@@ -2,6 +2,7 @@ package org.example.web;
 
 import org.example.service.LigneRapportVentes;
 import org.example.service.RapportVentesService;
+import org.example.util.ConsoleH2;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -14,8 +15,9 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 
 /**
- * GET /rapport-ventes            : rapport du mois precedent
- * GET /rapport-ventes?mois=2026-09 : rapport d'un mois donne
+ * Page HTML du rapport de ventes.
+ *   /rapport-ventes              mois precedent (par defaut)
+ *   /rapport-ventes?mois=AAAA-MM mois choisi
  */
 public class RapportVentesServlet extends HttpServlet {
     private RapportVentesService rapportService;
@@ -37,7 +39,9 @@ public class RapportVentesServlet extends HttpServlet {
         }
 
         List<LigneRapportVentes> rapport = rapportService.rapportMensuel(mois);
-        BigDecimal total = rapport.stream().map(LigneRapportVentes::getChiffreAffaires).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total = rapport.stream()
+                .map(LigneRapportVentes::getChiffreAffaires)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         resp.setContentType("text/html;charset=UTF-8");
         PrintWriter out = resp.getWriter();
@@ -48,15 +52,17 @@ public class RapportVentesServlet extends HttpServlet {
                 + "<a href=\"?mois=" + mois.plusMonths(1) + "\">" + mois.plusMonths(1) + " &rarr;</a></p>");
         out.println("<table border=\"1\" cellpadding=\"6\"><tr><th>Catégorie</th><th>Chiffre d'affaires</th></tr>");
         for (LigneRapportVentes ligne : rapport) {
-            out.println("<tr><td>" + echapper(ligne.getCategorie()) + "</td><td align=\"right\">"
+            out.println("<tr><td>" + echapperHtml(ligne.getIntituleCategorie()) + "</td><td align=\"right\">"
                     + ligne.getChiffreAffaires() + "</td></tr>");
         }
         out.println("<tr><th>Total</th><th align=\"right\">" + total + "</th></tr></table>");
+        out.println("<p><a href=\"" + ConsoleH2.URL + "\" target=\"_blank\">Console H2</a>"
+                + " (JDBC URL : jdbc:h2:mem:gestion_commerciale, utilisateur : sa)</p>");
         out.println("</body></html>");
     }
 
-    // les noms de categorie viennent de la base : on les echappe avant de les inserer dans le HTML
-    private static String echapper(String texte) {
+    // un intitule saisi en base ne doit pas pouvoir injecter de balises dans la page
+    private static String echapperHtml(String texte) {
         return texte.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 }

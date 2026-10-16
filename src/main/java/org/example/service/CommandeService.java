@@ -9,6 +9,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 
+/**
+ * Service des commandes : impose au moins une ligne et des quantites positives.
+ */
 public class CommandeService extends CrudService<Commande, Long> {
     private final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
@@ -17,25 +20,23 @@ public class CommandeService extends CrudService<Commande, Long> {
     }
 
     /**
-     * Les produits d'une commande viennent en general d'un autre EntityManager (getById) et sont detaches.
-     * Avec @MapsId, Hibernate refuse un produit detache au persist ("detached entity passed to persist") :
-     * on le remplace donc par une reference geree par l'EntityManager courant.
+     * Les produits ajoutes a la commande ont ete lus par un autre EntityManager, ils sont donc detaches.
+     * Avec une cle derivee (@MapsId), Hibernate rejette un produit detache lors du persist :
+     * chaque ligne recoit a la place une reference geree, obtenue par getReference() sans requete SQL.
      */
     @Override
     public void create(Commande commande) {
-        if (commande == null) {
-            throw new IllegalArgumentException("L'entité ne doit pas être nulle");
-        }
-        if (commande.getLignes().isEmpty()) {
+        exigerEntite(commande);
+        if (commande.getLignesCommande().isEmpty()) {
             throw new IllegalArgumentException("Une commande doit contenir au moins un produit");
         }
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            for (CommandeProduit ligne : commande.getLignes()) {
-                if (ligne.getQuantite() <= 0) {
-                    throw new IllegalArgumentException("Quantité invalide pour " + ligne.getProduit().getLibelle());
+            for (CommandeProduit ligne : commande.getLignesCommande()) {
+                if (ligne.getQuantiteCommandee() <= 0) {
+                    throw new IllegalArgumentException("Quantité invalide pour " + ligne.getProduit().getDesignation());
                 }
                 ligne.setProduit(em.getReference(Produit.class, ligne.getProduit().getId()));
             }

@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- squelette issu de maven-archetype-webapp (groupId org.example, artifactId gestion-commerciale) -->
+    <!-- application web packagee en war, generee a partir de maven-archetype-webapp -->
     <groupId>org.example</groupId>
     <artifactId>gestion-commerciale</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -14,7 +14,7 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- classe lancee par mvn exec:java -->
+        <!-- point d'entree utilise par mvn exec:java -->
         <exec.mainClass>org.example.App</exec.mainClass>
     </properties>
 
@@ -29,12 +29,13 @@
             <artifactId>javax.persistence-api</artifactId>
             <version>2.2</version>
         </dependency>
+        <!-- base H2 en memoire ; portee compile car l'application lance aussi la console web H2 -->
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.33</version>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.2.224</version>
         </dependency>
-        <!-- fourni par le serveur d'application (Tomcat 9, Jetty 9...) -->
+        <!-- l'API servlet est deja presente dans le conteneur (Tomcat, Jetty) -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
@@ -47,35 +48,11 @@
             <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
-        <!-- les tests tournent sur une base H2 en memoire, sans dependre de MySQL -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>1.4.200</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
         <finalName>gestion-commerciale</finalName>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
-                <configuration>
-                    <!-- surcharge de l'unite defaultPU, lue par JpaUtil -->
-                    <systemPropertyVariables>
-                        <javax.persistence.jdbc.driver>org.h2.Driver</javax.persistence.jdbc.driver>
-                        <javax.persistence.jdbc.url>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</javax.persistence.jdbc.url>
-                        <javax.persistence.jdbc.user>sa</javax.persistence.jdbc.user>
-                        <javax.persistence.jdbc.password></javax.persistence.jdbc.password>
-                        <hibernate.dialect>org.hibernate.dialect.H2Dialect</hibernate.dialect>
-                        <hibernate.hbm2ddl.auto>create-drop</hibernate.hbm2ddl.auto>
-                        <hibernate.show_sql>false</hibernate.show_sql>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -89,7 +66,7 @@
                     <mainClass>${exec.mainClass}</mainClass>
                 </configuration>
             </plugin>
-            <!-- mvn jetty:run demarre l'application sur http://localhost:8080/ -->
+            <!-- mvn jetty:run : application sur http://localhost:8080/rapport-ventes -->
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>

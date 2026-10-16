@@ -6,38 +6,39 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Cle composee (commande_id, produit_id) de la table commande_produit.
+ * Identifiant d'une ligne de commande : le couple (commande, produit).
+ * Un meme produit ne peut donc figurer qu'une fois par commande.
  */
 @Embeddable
 public class CommandeProduitPK implements Serializable {
     @Column(name = "commande_id")
-    private Long commandeId;
+    private Long idCommande;
 
     @Column(name = "produit_id")
-    private Long produitId;
+    private Long idProduit;
 
     public CommandeProduitPK() {}
-    public CommandeProduitPK(Long commandeId, Long produitId) {
-        this.commandeId = commandeId;
-        this.produitId = produitId;
+    public CommandeProduitPK(Long idCommande, Long idProduit) {
+        this.idCommande = idCommande;
+        this.idProduit = idProduit;
     }
 
-    public Long getCommandeId() { return commandeId; }
-    public void setCommandeId(Long commandeId) { this.commandeId = commandeId; }
-    public Long getProduitId() { return produitId; }
-    public void setProduitId(Long produitId) { this.produitId = produitId; }
+    public Long getIdCommande() { return idCommande; }
+    public void setIdCommande(Long idCommande) { this.idCommande = idCommande; }
+    public Long getIdProduit() { return idProduit; }
+    public void setIdProduit(Long idProduit) { this.idProduit = idProduit; }
 
-    // obligatoires pour une cle composee : Hibernate compare les identifiants par valeur
+    // deux cles sont egales si elles designent la meme commande et le meme produit
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof CommandeProduitPK)) return false;
-        CommandeProduitPK that = (CommandeProduitPK) o;
-        return Objects.equals(commandeId, that.commandeId) && Objects.equals(produitId, that.produitId);
+        CommandeProduitPK autre = (CommandeProduitPK) o;
+        return Objects.equals(idCommande, autre.idCommande) && Objects.equals(idProduit, autre.idProduit);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(commandeId, produitId);
+        return Objects.hash(idCommande, idProduit);
     }
 }

@@ -4,6 +4,9 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Famille de produits (Informatique, Papeterie...). Son intitule est unique.
+ */
 @Entity
 @Table(name = "categories")
 public class Categorie {
@@ -11,33 +14,33 @@ public class Categorie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String nom;
+    @Column(name = "intitule", nullable = false, unique = true, length = 100)
+    private String intitule;
 
+    // cote inverse : la cle etrangere est portee par Produit.categorie ;
+    // retirer un produit de la liste le supprime de la base (orphanRemoval)
     @OneToMany(mappedBy = "categorie", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Produit> produits = new ArrayList<>();
+    private List<Produit> listeProduits = new ArrayList<>();
 
-    // Constructeurs
     public Categorie() {}
-    public Categorie(String nom) { this.nom = nom; }
+    public Categorie(String intitule) { this.intitule = intitule; }
 
-    // garde les deux cotes de la relation coherents
-    public void addProduit(Produit p) {
-        produits.add(p);
+    // ces deux methodes mettent a jour les deux extremites de l'association en meme temps
+    public void ajouterProduit(Produit p) {
+        listeProduits.add(p);
         p.setCategorie(this);
     }
 
-    public void removeProduit(Produit p) {
-        produits.remove(p);
+    public void retirerProduit(Produit p) {
+        listeProduits.remove(p);
         p.setCategorie(null);
     }
 
-    // Getters & Setters
     public Long getId() { return id; }
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
-    public List<Produit> getProduits() { return produits; }
+    public String getIntitule() { return intitule; }
+    public void setIntitule(String intitule) { this.intitule = intitule; }
+    public List<Produit> getListeProduits() { return listeProduits; }
 
     @Override
-    public String toString() { return "Categorie{id=" + id + ", nom='" + nom + "'}"; }
+    public String toString() { return "Categorie{id=" + id + ", intitule='" + intitule + "'}"; }
 }

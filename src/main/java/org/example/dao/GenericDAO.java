@@ -9,21 +9,25 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * DAO generique reposant uniquement sur JPA : un EntityManager par operation,
- * une transaction pour chaque ecriture, fermeture garantie dans le finally.
+ * Operations CRUD communes a toutes les entites, ecrites avec l'API JPA standard.
+ * Chaque appel represente une unite de travail : il ouvre son propre EntityManager et le referme
+ * quoi qu'il arrive ; les ecritures sont encadrees par une transaction annulee en cas d'erreur.
+ *
+ * @param <T>  type de l'entite geree
+ * @param <ID> type de sa cle primaire
  */
 public class GenericDAO<T, ID extends Serializable> {
-    private final Class<T> entityClass;
+    private final Class<T> typeEntite;
     private final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
-    public GenericDAO(Class<T> entityClass) {
-        this.entityClass = entityClass;
+    public GenericDAO(Class<T> typeEntite) {
+        this.typeEntite = typeEntite;
     }
 
     public T find(ID id) {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.find(entityClass, id);
+            return em.find(typeEntite, id);
         } finally {
             em.close();
         }
@@ -32,19 +36,20 @@ public class GenericDAO<T, ID extends Serializable> {
     public List<T> findAll() {
         EntityManager em = emf.createEntityManager();
         try {
-            String jpql = "SELECT e FROM " + entityClass.getSimpleName() + " e";
-            return em.createQuery(jpql, entityClass).getResultList();
+            // le nom simple de la classe est aussi le nom de l'entite en JPQL
+            String jpql = "SELECT e FROM " + typeEntite.getSimpleName() + " e";
+            return em.createQuery(jpql, typeEntite).getResultList();
         } finally {
             em.close();
         }
     }
 
-    public void create(T entity) {
+    public void create(T entite) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            em.persist(entity);
+            em.persist(entite);
             tx.commit();
         } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();
@@ -54,14 +59,15 @@ public class GenericDAO<T, ID extends Serializable> {
         }
     }
 
-    public T update(T entity) {
+    public T update(T entite) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            T merged = em.merge(entity);
+            // merge renvoie la copie geree ; l'objet passe en parametre reste detache
+            T copieGeree = em.merge(entite);
             tx.commit();
-            return merged;
+            return copieGeree;
         } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();
             throw e;
@@ -70,14 +76,14 @@ public class GenericDAO<T, ID extends Serializable> {
         }
     }
 
-    public void delete(T entity) {
+    public void delete(T entite) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            // une entite detachee doit etre rattachee au contexte avant remove()
-            T attached = em.contains(entity) ? entity : em.merge(entity);
-            em.remove(attached);
+            // remove() n'accepte qu'une entite geree : on rattache d'abord celle recue si besoin
+            T geree = em.contains(entite) ? entite : em.merge(entite);
+            em.remove(geree);
             tx.commit();
         } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();

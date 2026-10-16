@@ -3,22 +3,22 @@ package org.example.service;
 import java.math.BigDecimal;
 
 /**
- * Une ligne du rapport mensuel : chiffre d'affaires d'une categorie.
+ * Objet de transfert (pas une entite) : une categorie et ses ventes sur la periode.
  */
 public class LigneRapportVentes {
-    private final String categorie;
+    private final String intituleCategorie;
     private final BigDecimal chiffreAffaires;
 
-    public LigneRapportVentes(String categorie, BigDecimal chiffreAffaires) {
-        this.categorie = categorie;
+    public LigneRapportVentes(String intituleCategorie, BigDecimal chiffreAffaires) {
+        this.intituleCategorie = intituleCategorie;
         this.chiffreAffaires = chiffreAffaires;
     }
 
-    public String getCategorie() { return categorie; }
+    public String getIntituleCategorie() { return intituleCategorie; }
     public BigDecimal getChiffreAffaires() { return chiffreAffaires; }
 
     @Override
     public String toString() {
-        return categorie + " : " + chiffreAffaires;
+        return intituleCategorie + " : " + chiffreAffaires;
     }
 }

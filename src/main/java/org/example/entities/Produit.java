@@ -4,54 +4,62 @@ import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * Article vendu, rattache a une seule categorie (cote proprietaire de la relation).
+ */
 @Entity
 @Table(name = "produits")
 @NamedQueries({
-    @NamedQuery(name = "Produit.findAll", query = "SELECT p FROM Produit p"),
-    @NamedQuery(name = "Produit.findByCategorie", query = "SELECT p FROM Produit p WHERE p.categorie.id = :catId"),
-    @NamedQuery(name = "Produit.searchByLibelle", query = "SELECT p FROM Produit p WHERE LOWER(p.libelle) LIKE LOWER(CONCAT('%', :term, '%'))"),
-    // charge aussi la categorie (LAZY) dans la meme requete
-    @NamedQuery(name = "Produit.findByIdAvecCategorie", query = "SELECT p FROM Produit p JOIN FETCH p.categorie WHERE p.id = :id")
+    @NamedQuery(name = "Produit.tous", query = "SELECT p FROM Produit p"),
+    @NamedQuery(name = "Produit.parCategorie", query = "SELECT p FROM Produit p WHERE p.categorie.id = :idCategorie"),
+    @NamedQuery(name = "Produit.parDesignation",
+                query = "SELECT p FROM Produit p WHERE LOWER(p.designation) LIKE LOWER(CONCAT('%', :motCle, '%'))"),
+    // la categorie est ramenee dans le meme SELECT pour pouvoir la lire apres fermeture de l'EntityManager
+    @NamedQuery(name = "Produit.avecCategorie", query = "SELECT p FROM Produit p JOIN FETCH p.categorie WHERE p.id = :id")
 })
 public class Produit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 150)
-    private String libelle;
+    @Column(name = "designation", nullable = false, length = 150)
+    private String designation;
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal prix;
+    // 10 chiffres dont 2 apres la virgule
+    @Column(name = "prix_unitaire", precision = 10, scale = 2)
+    private BigDecimal prixUnitaire;
 
-    @Column(name = "date_creation")
-    private LocalDate dateCreation;
+    // LocalDate est convertie en colonne DATE sans annotation supplementaire (JPA 2.2)
+    @Column(name = "date_ajout")
+    private LocalDate dateAjout;
 
+    // chargee seulement a la demande ; colonne categorie_id obligatoire
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categorie_id", nullable = false)
     private Categorie categorie;
 
     public Produit() {}
-    public Produit(String libelle, BigDecimal prix, Categorie categorie) {
-        this.libelle = libelle;
-        this.prix = prix;
+    public Produit(String designation, BigDecimal prixUnitaire, Categorie categorie) {
+        this.designation = designation;
+        this.prixUnitaire = prixUnitaire;
         this.categorie = categorie;
-        this.dateCreation = LocalDate.now();
+        this.dateAjout = LocalDate.now();
     }
 
     public Long getId() { return id; }
-    public String getLibelle() { return libelle; }
-    public void setLibelle(String libelle) { this.libelle = libelle; }
-    public BigDecimal getPrix() { return prix; }
-    public void setPrix(BigDecimal prix) { this.prix = prix; }
-    public LocalDate getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDate dateCreation) { this.dateCreation = dateCreation; }
+    public String getDesignation() { return designation; }
+    public void setDesignation(String designation) { this.designation = designation; }
+    public BigDecimal getPrixUnitaire() { return prixUnitaire; }
+    public void setPrixUnitaire(BigDecimal prixUnitaire) { this.prixUnitaire = prixUnitaire; }
+    public LocalDate getDateAjout() { return dateAjout; }
+    public void setDateAjout(LocalDate dateAjout) { this.dateAjout = dateAjout; }
     public Categorie getCategorie() { return categorie; }
     public void setCategorie(Categorie categorie) { this.categorie = categorie; }
 
-    // la categorie n'est pas affichee : elle est LAZY et l'entite est souvent detachee
+    // on n'affiche pas la categorie : sur une entite detachee cela declencherait une LazyInitializationException
     @Override
     public String toString() {
-        return "Produit{id=" + id + ", libelle='" + libelle + "', prix=" + prix + ", dateCreation=" + dateCreation + "}";
+        return "Produit{id=" + id + ", designation='" + designation + "', prixUnitaire=" + prixUnitaire
+                + ", dateAjout=" + dateAjout + "}";
     }
 }

@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CRUD generique plus les requetes propres aux produits (named queries, Criteria, pagination).
+ * Service du catalogue : CRUD herite + requetes nommees, recherche dynamique et pagination.
  */
 public class ProduitService extends CrudService<Produit, Long> {
     private final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
@@ -24,11 +24,11 @@ public class ProduitService extends CrudService<Produit, Long> {
         super(Produit.class);
     }
 
-    // produit et categorie charges ensemble (JOIN FETCH) : utilisable une fois l'EntityManager ferme
+    // renvoie le produit avec sa categorie deja initialisee, ou null s'il n'existe pas
     public Produit getByIdAvecCategorie(Long id) {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.createNamedQuery("Produit.findByIdAvecCategorie", Produit.class)
+            return em.createNamedQuery("Produit.avecCategorie", Produit.class)
                      .setParameter("id", id)
                      .getResultStream()
                      .findFirst()
@@ -38,63 +38,67 @@ public class ProduitService extends CrudService<Produit, Long> {
         }
     }
 
-    public List<Produit> findByCategorie(Long catId) {
+    public List<Produit> findByCategorie(Long idCategorie) {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.createNamedQuery("Produit.findByCategorie", Produit.class)
-                     .setParameter("catId", catId)
+            return em.createNamedQuery("Produit.parCategorie", Produit.class)
+                     .setParameter("idCategorie", idCategorie)
                      .getResultList();
         } finally {
             em.close();
         }
     }
 
-    public List<Produit> searchByLibelle(String term) {
+    // recherche insensible a la casse sur une partie de la designation
+    public List<Produit> searchByDesignation(String motCle) {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.createNamedQuery("Produit.searchByLibelle", Produit.class)
-                     .setParameter("term", term)
+            return em.createNamedQuery("Produit.parDesignation", Produit.class)
+                     .setParameter("motCle", motCle)
                      .getResultList();
         } finally {
             em.close();
         }
     }
 
-    // recherche multi-criteres : seuls les filtres renseignes sont ajoutes a la clause WHERE
-    public List<Produit> search(String term, BigDecimal minPrix, BigDecimal maxPrix) {
+    /**
+     * Recherche multi-filtres avec l'API Criteria : chaque parametre null ou vide est ignore,
+     * les autres deviennent des conditions reliees par AND. Les valeurs passent en parametres JDBC.
+     */
+    public List<Produit> search(String motCle, BigDecimal prixMin, BigDecimal prixMax) {
         EntityManager em = emf.createEntityManager();
         try {
             CriteriaBuilder cb = em.getCriteriaBuilder();
-            CriteriaQuery<Produit> cq = cb.createQuery(Produit.class);
-            Root<Produit> root = cq.from(Produit.class);
-            List<Predicate> predicates = new ArrayList<>();
-            if (term != null && !term.isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.<String>get("libelle")), "%" + term.toLowerCase() + "%"));
+            CriteriaQuery<Produit> requete = cb.createQuery(Produit.class);
+            Root<Produit> produit = requete.from(Produit.class);
+            List<Predicate> conditions = new ArrayList<>();
+            if (motCle != null && !motCle.isEmpty()) {
+                conditions.add(cb.like(cb.lower(produit.<String>get("designation")), "%" + motCle.toLowerCase() + "%"));
             }
-            if (minPrix != null) {
-                predicates.add(cb.ge(root.<BigDecimal>get("prix"), minPrix));
+            if (prixMin != null) {
+                conditions.add(cb.ge(produit.<BigDecimal>get("prixUnitaire"), prixMin));
             }
-            if (maxPrix != null) {
-                predicates.add(cb.le(root.<BigDecimal>get("prix"), maxPrix));
+            if (prixMax != null) {
+                conditions.add(cb.le(produit.<BigDecimal>get("prixUnitaire"), prixMax));
             }
-            cq.where(predicates.toArray(new Predicate[0]));
-            cq.orderBy(cb.asc(root.get("prix")));
-            return em.createQuery(cq).getResultList();
+            requete.where(conditions.toArray(new Predicate[0]));
+            requete.orderBy(cb.asc(produit.get("prixUnitaire")));
+            return em.createQuery(requete).getResultList();
         } finally {
             em.close();
         }
     }
 
-    // pageNumber commence a 1
-    public List<Produit> findPage(int pageNumber, int pageSize) {
-        if (pageNumber < 1 || pageSize < 1) {
-            throw new IllegalArgumentException("pageNumber et pageSize doivent être >= 1");
+    // numeroPage commence a 1 ; le tri sur l'id garantit un decoupage stable d'une page a l'autre
+    public List<Produit> findPage(int numeroPage, int taillePage) {
+        if (numeroPage < 1 || taillePage < 1) {
+            throw new IllegalArgumentException("numeroPage et taillePage doivent être >= 1");
         }
         EntityManager em = emf.createEntityManager();
         try {
             return em.createQuery("SELECT p FROM Produit p ORDER BY p.id", Produit.class)
-                     .setFirstResult((pageNumber - 1) * pageSize)
-                     .setMaxResults(pageSize)
+                     .setFirstResult((numeroPage - 1) * taillePage)
+                     .setMaxResults(taillePage)
                      .getResultList();
         } finally {
             em.close();
@@ -111,8 +115,8 @@ public class ProduitService extends CrudService<Produit, Long> {
     }
 
     /**
-     * Enregistre tous les produits dans une seule transaction : si l'un d'eux a un prix negatif,
-     * aucun n'est enregistre (rollback).
+     * Insertion groupee en tout ou rien : un seul prix invalide et la transaction entiere est annulee,
+     * y compris les produits deja passes a persist().
      */
     public void createAll(List<Produit> produits) {
         EntityManager em = emf.createEntityManager();
@@ -121,8 +125,8 @@ public class ProduitService extends CrudService<Produit, Long> {
             tx.begin();
             for (Produit p : produits) {
                 em.persist(p);
-                if (p.getPrix() == null || p.getPrix().compareTo(BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Prix négatif ou absent pour " + p.getLibelle());
+                if (p.getPrixUnitaire() == null || p.getPrixUnitaire().compareTo(BigDecimal.ZERO) < 0) {
+                    throw new IllegalArgumentException("Prix négatif ou absent pour " + p.getDesignation());
                 }
             }
             tx.commit();

@@ -6,7 +6,7 @@
 
     <display-name>Gestion commerciale</display-name>
 
-    <!-- ferme l'EntityManagerFactory et la SessionFactory a l'arret du serveur -->
+    <!-- demarrage : jeu de donnees + console H2 ; arret : liberation de la persistance -->
     <listener>
         <listener-class>org.example.web.PersistenceListener</listener-class>
     </listener>
@@ -19,8 +19,4 @@
         <servlet-name>RapportVentesServlet</servlet-name>
         <url-pattern>/rapport-ventes</url-pattern>
     </servlet-mapping>
-
-    <welcome-file-list>
-        <welcome-file>index.html</welcome-file>
-    </welcome-file-list>
 </web-app>

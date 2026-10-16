@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>ma.projet</groupId>
+        <artifactId>tp7-hibernate</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <!-- Exercice 2 : suivi du temps passe sur les projets d'un bureau d'etudes -->
+    <artifactId>exercice2-gestion-projets</artifactId>
+
+    <properties>
+        <exec.mainClass>ma.projet.test.TestGestionProjets</exec.mainClass>
+    </properties>
+</project>
